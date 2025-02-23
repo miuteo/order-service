@@ -1,14 +1,18 @@
 package com.miu.teo.book.cloudnativespring.orderservice.order.domain;
 
+import com.miu.teo.book.cloudnativespring.orderservice.book.Book;
+import com.miu.teo.book.cloudnativespring.orderservice.book.BookClient;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
 public class OrderService {
+    private final BookClient bookClient;
     private final OrderRepository orderRepository;
 
-    public OrderService(OrderRepository orderRepository) {
+    public OrderService(BookClient bookClient, OrderRepository orderRepository) {
+        this.bookClient = bookClient;
         this.orderRepository = orderRepository;
     }
 
@@ -17,7 +21,9 @@ public class OrderService {
     }
 
     public Mono<Order> submitOrder(String isbn, int quantity) {
-        return Mono.just(buildRejectedOrder(isbn, quantity))
+        return bookClient.getBookByIsbn(isbn)
+                .map(book -> buildAcceptedOrder(book, quantity))
+                .defaultIfEmpty( buildRejectedOrder(isbn,quantity)) //TODO 404 not found
                 .flatMap(orderRepository::save);
     }
 
@@ -25,4 +31,7 @@ public class OrderService {
         return Order.of(bookIsbn,null,null,quantity,OrderStatus.REJECTED);
     }
 
+    private static Order buildAcceptedOrder(Book book, int quantity) {
+        return Order.of(book.isbn(),book.title(),book.price(),quantity,OrderStatus.ACCEPTED);
+    }
 }
