@@ -141,6 +141,28 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <image>
+                        <name>order-service:latest</name>
+                        <env>
+                            <BP_HEALTH_CHECKER_ENABLED>true</BP_HEALTH_CHECKER_ENABLED>
+                            <BP_JVM_VERSION>17.*</BP_JVM_VERSION> <!-- Equivalent to environment in Gradle -->
+                            <DB_HOSTNAME>polar-postgres</DB_HOSTNAME>
+                        </env>
+                        <buildpacks>
+                            <buildpack>urn:cnb:builder:paketo-buildpacks/java</buildpack>
+                            <buildpack>gcr.io/paketo-buildpacks/health-checker:latest</buildpack>
+                        </buildpacks>
+                    </image>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build-image</goal> <!-- This goal repackages the JAR into an executable one -->
+                        </goals>
+                        <phase>package</phase> <!-- This binds the plugin execution to the 'package' phase -->
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
